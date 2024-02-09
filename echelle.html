@@ -18,7 +18,7 @@
         //urlData = "http://localhost/samszo/HDR/docs/assets/data/complexityFrequency.json",
         urlData = "https://raw.githubusercontent.com/nestbric/echelles/main/fr-en-evaluations_nationales_6eme_region.csv",
         width = 600, height=600, widthLibTxt=120, svg,  
-        valX='Score moyen',valDim='Matière',valY='Ecart type',
+        valX='Score moyen',valGroupe='Matière',valY='Ecart type', valLibCercle = 'Région académique',
         bandY,
         interpolates = false;
         /*{
@@ -39,7 +39,7 @@
     })
 
     function setData(rs){
-        data = Array.from(d3.group(rs, d => d[valDim]));
+        data = Array.from(d3.group(rs, d => d[valGroupe]));
         //création de l'échelle par bandes
         //cf. https://observablehq.com/@d3/d3-scaleband
         bandY = d3.scaleBand(data.map(d=>d[0]), [0, height]).paddingInner(0.2).paddingOuter(0.2);
@@ -55,7 +55,7 @@
                         'scX':d3.scaleLinear().domain(extX).range([widthLibTxt, width-widthLibTxt]),
                         'scY':d3.scaleLinear().domain(extY).range([0, bandY.bandwidth()])
                         };
-                        o[valDim]=d[0];
+                        o[valGroupe]=d[0];
                     return o;
                 });
         return data;
@@ -79,22 +79,37 @@
                 .attr("height", height)
                 .attr("style", "max-width: 100%; height: auto;")
                 .style("font", "14px sans-serif"),
-            dim = svg.selectAll('g').data(data).enter().append("g")
-                .attr("transform",(d,i)=>`translate(0,${bandY(d[valDim])})`);
-            dim.append("text").text(d=>{
-                return d[valDim]
+            groupe = svg.selectAll('g').data(data).enter().append("g")
+                .attr("transform",(d,i)=>`translate(0,${bandY(d[valGroupe])})`);
+            groupe.append("text").text(d=>{
+                return d[valGroupe]
             })
-            dim.append("g").attr("transform", (d,i)=>`translate(widthLibTxt,0)`).attr('id',(d,i)=>'axisX'+i)
+            //ajoute la légende des axes
+            groupe.append("text").text(valX).attr("transform", d=>`translate(${widthLibTxt},-20)`).attr("font-size","smaller");
+            groupe.append("text").text(valY).attr("transform", d=>`translate(${widthLibTxt},${bandY.bandwidth()+14})`).attr("font-size","smaller");
+            //ajoute les axes
+            groupe.append("g").attr("transform", (d,i)=>`translate(0,0)`).attr('id',(d,i)=>'axisX'+i)
                 .each((d,i)=>{
                     d3.select('#axisX'+i).call(d3.axisTop(d.scX));
                 })
-            dim.append("g").attr("transform", (d,i)=>`translate(${widthLibTxt},0)`).attr('id',(d,i)=>'axisY'+i)
+            groupe.append("g").attr("transform", (d,i)=>`translate(${widthLibTxt},0)`).attr('id',(d,i)=>'axisY'+i)
                 .each((d,i)=>{
                     d3.select('#axisY'+i).call(d3.axisLeft(d.scY));
                 })
+            let cercles = groupe.selectAll('.cercle').data(d=>d.vals.map(m=>{
+                    return {'valX':m[valX],'valY':m[valY],'sclX':d.scX,'sclY':d.scY,'lib':m[valLibCercle]}
+                })).enter().append("g").attr('class','cercle');
+            cercles.append('circle')
+                .attr("cx",d=>d.sclX(d.valX))
+                .attr("cy",d=>d.sclY(d.valY))
+                .attr('r','6')
+                .attr('fill','bleu');
+            cercles.append('text')
+                .attr("x",d=>d.sclX(d.valX))
+                .attr("y",d=>d.sclY(d.valY))
+                .text(d=>d.lib);
+            
     }
 
 </script>
 </html>
-
-
