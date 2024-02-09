@@ -103,11 +103,12 @@
                 .attr("cx",d=>d.sclX(d.valX))
                 .attr("cy",d=>d.sclY(d.valY))
                 .attr('r','6')
-                .attr('fill','bleu');
+                .attr('fill','green');
             cercles.append('text')
                 .attr("x",d=>d.sclX(d.valX))
                 .attr("y",d=>d.sclY(d.valY))
-                .text(d=>d.lib);
+                .text(d=>d.lib)
+                .attr("font-size","smaller");
             
     }
 
