@@ -6,9 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Echelles statistiques</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        #toolTip{
+            position: absolute;
+            display: none;
+            background-color: white;
+        }
+        .cercle{
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 <div id="resultat"></div>
+<div id="toolTip"></div>
 
 </body>
 <script type="module">
@@ -20,7 +31,8 @@
         width = 600, height=600, widthLibTxt=120, svg,  
         valX='Score moyen',valGroupe='Matière',valY='Ecart type', valLibCercle = 'Région académique',
         bandY,
-        interpolates = false;
+        interpolates = false,
+        toolTip = d3.select("#toolTip");
         /*{
                 'Existence':d3.interpolateViridis,
                 'Physique':d3.interpolatePlasma,
@@ -53,7 +65,8 @@
                         //'scX':d3.scaleLog().domain(extX).range([widthLibTxt, width-widthLibTxt]),
                         //'scY':d3.scaleLog().domain(extY).range([0, bandY.bandwidth()])                        
                         'scX':d3.scaleLinear().domain(extX).range([widthLibTxt, width-widthLibTxt]),
-                        'scY':d3.scaleLinear().domain(extY).range([0, bandY.bandwidth()])
+                        'scY':d3.scaleLinear().domain(extY).range([0, bandY.bandwidth()]),
+                        'scColor':d3.scaleSequentialLog(extX, d3.interpolatePlasma)
                         };
                         o[valGroupe]=d[0];
                     return o;
@@ -97,19 +110,34 @@
                     d3.select('#axisY'+i).call(d3.axisLeft(d.scY));
                 })
             let cercles = groupe.selectAll('.cercle').data(d=>d.vals.map(m=>{
-                    return {'valX':m[valX],'valY':m[valY],'sclX':d.scX,'sclY':d.scY,'lib':m[valLibCercle]}
-                })).enter().append("g").attr('class','cercle');
+                    m.sclX=d.scX;
+                    m.sclY=d.scY;
+                    m.sclC=d.scColor;
+                    return m;
+                })).enter().append("g").attr('class','cercle')
+                .on('mouseenter',showToolTip)
+                .on('mouseleave',hideToolTip);
             cercles.append('circle')
-                .attr("cx",d=>d.sclX(d.valX))
-                .attr("cy",d=>d.sclY(d.valY))
-                .attr('r','6')
-                .attr('fill','green');
+                .attr("cx",d=>d.sclX(d[valX]))
+                .attr("cy",d=>d.sclY(d[valY]))
+                .attr('r','8')
+                .attr('fill',d=>d.sclC(d[valX]));
             cercles.append('text')
-                .attr("x",d=>d.sclX(d.valX))
-                .attr("y",d=>d.sclY(d.valY))
-                .text(d=>d.lib)
-                .attr("font-size","smaller");
+                .attr("x",d=>d.sclX(d[valX]))
+                .attr("y",d=>d.sclY(d[valY])+3)
+                .attr("font-size","smaller")
+                .attr("text-anchor","middle")
+                .text(d=>d[valLibCercle].substring(0,1));
             
+    }
+    function showToolTip(e,d){
+        toolTip.style('display','block');
+        toolTip.style('left',d.sclX(d[valX])+'px');
+        toolTip.style('top',d.sclY(d[valY])+'px');
+        toolTip.text(JSON.stringify(d));
+    }
+    function hideToolTip(e,d){
+        toolTip.style('display','none');
     }
 
 </script>
